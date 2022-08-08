@@ -1,16 +1,18 @@
 #!/usr/bin/python3
-""" Module that contains class Base """
+"""Module of Base"""
+
 import json
 import csv
-import os.path
+import turtle
 
 
 class Base:
-    """ Class Base """
+    """Type class for base"""
+
     __nb_objects = 0
 
     def __init__(self, id=None):
-        """ Initializes instances """
+
         if id is not None:
             self.id = id
         else:
@@ -19,118 +21,114 @@ class Base:
 
     @staticmethod
     def to_json_string(list_dictionaries):
-        """ List to JSON string """
-        if list_dictionaries is None or list_dictionaries == "[]":
+
+        if list_dictionaries is None or len(list_dictionaries) == []:
             return "[]"
         return json.dumps(list_dictionaries)
 
     @classmethod
     def save_to_file(cls, list_objs):
-        """ Save object in a file """
-        filename = "{}.json".format(cls.__name__)
-        list_dic = []
 
-        if not list_objs:
-            pass
-        else:
-            for i in range(len(list_objs)):
-                list_dic.append(list_objs[i].to_dictionary())
-
-        lists = cls.to_json_string(list_dic)
-
-        with open(filename, 'w') as f:
-            f.write(lists)
+        filename = cls.__name__ + ".json"
+        with open(filename, "w") as f:
+            if list_objs is None:
+                f.write("[]")
+            else:
+                list_dictionaries = [o.to_dictionary() for o in list_objs]
+                f.write(Base.to_json_string(list_dictionaries))
 
     @staticmethod
     def from_json_string(json_string):
-        """ JSON string to dictionary """
-        if not json_string:
+
+        if json_string is None or json_string == '[]':
             return []
-        return json.loads(json_string)
+        else:
+            return json.loads(json_string)
 
     @classmethod
     def create(cls, **dictionary):
-        """ Create an instance """
+
         if cls.__name__ == "Rectangle":
-            new = cls(10, 10)
+            new_instance = cls(5, 5)
         else:
-            new = cls(10)
-        new.update(**dictionary)
-        return new
+            new_instance = cls(5)
+        new_instance.update(**dictionary)
+        return new_instance
 
     @classmethod
     def load_from_file(cls):
-        """ Returns a list of instances """
-        filename = "{}.json".format(cls.__name__)
 
-        if os.path.exists(filename) is False:
+        filename = str(cls.__name__) + ".json"
+        try:
+            with open(filename, "r") as f:
+                list_dictionaries = Base.from_json_string(f.read())
+                return [cls.create(**dicti) for dicti in list_dictionaries]
+        except IOError:
             return []
-
-        with open(filename, 'r') as f:
-            list_str = f.read()
-
-        list_cls = cls.from_json_string(list_str)
-        list_ins = []
-
-        for index in range(len(list_cls)):
-            list_ins.append(cls.create(**list_cls[index]))
-
-        return list_ins
 
     @classmethod
     def save_to_file_csv(cls, list_objs):
-        """ Method that saves a CSV file """
-        filename = "{}.csv".format(cls.__name__)
 
-        if cls.__name__ == "Rectangle":
-            list_dic = [0, 0, 0, 0, 0]
-            list_keys = ['id', 'width', 'height', 'x', 'y']
-        else:
-            list_dic = ['0', '0', '0', '0']
-            list_keys = ['id', 'size', 'x', 'y']
-
-        matrix = []
-
-        if not list_objs:
-            pass
-        else:
-            for obj in list_objs:
-                for kv in range(len(list_keys)):
-                    list_dic[kv] = obj.to_dictionary()[list_keys[kv]]
-                matrix.append(list_dic[:])
-
-        with open(filename, 'w') as writeFile:
-            writer = csv.writer(writeFile)
-            writer.writerows(matrix)
+        filename = cls.__name__ + ".csv"
+        with open(filename, "w", newline="") as csvfile:
+            if list_objs is None:
+                f.write("")
+            else:
+                if cls.__name__ == "Rectangle":
+                    fieldnames = ["id", "width", "height", "x", "y"]
+                else:
+                    fieldnames = ["id", "size", "x", "y"]
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                for obj in list_objs:
+                    writer.writerow(obj.to_dictionary())
 
     @classmethod
     def load_from_file_csv(cls):
-        """ Method that loads a CSV file """
-        filename = "{}.csv".format(cls.__name__)
 
-        if os.path.exists(filename) is False:
+        filename = cls.__name__ + ".csv"
+        try:
+            with open(filename, "r", newline="") as csvfile:
+                if cls.__name__ == "Rectangle":
+                    fieldnames = ["id", "width", "height", "x", "y"]
+                else:
+                    fieldnames = ["id", "size", "x", "y"]
+                list_dictionaries = csv.DictReader(csvfile,
+                                                   fieldnames=fieldnames)
+                list_dictionaries = [dict([i, int(j)]for i, j in dicti.items())
+                                     for dicti in list_dictionaries]
+                return [cls.create(**dicti) for dicti in list_dictionaries]
+        except IOError:
             return []
 
-        with open(filename, 'r') as readFile:
-            reader = csv.reader(readFile)
-            csv_list = list(reader)
+    @staticmethod
+    def draw(list_rectangles, list_squares):
 
-        if cls.__name__ == "Rectangle":
-            list_keys = ['id', 'width', 'height', 'x', 'y']
-        else:
-            list_keys = ['id', 'size', 'x', 'y']
+        turt = turtle.Turtle()
+        turt.pensize(2)
+        turt.shape("arrow")
 
-        matrix = []
+        turt.color("navy")
+        for rectangle in list_rectangles:
+            turt.showturtle()
+            turt.up()
+            turt.goto(rectangle.x, rectangle.y)
+            turt.down()
+            for i in range(2):
+                turt.forward(rectangle.width)
+                turt.left(90)
+                turt.forward(rectangle.height)
+                turt.left(90)
+            turt.hideturtle()
 
-        for csv_elem in csv_list:
-            dict_csv = {}
-            for kv in enumerate(csv_elem):
-                dict_csv[list_keys[kv[0]]] = int(kv[1])
-            matrix.append(dict_csv)
+        turt.color("Orange Red")
+        for square in list_squares:
+            turt.showturtle()
+            turt.up()
+            turt.goto(square.x, square.y)
+            turt.down()
+            for i in range(4):
+                turt.forward(square.width)
+                turt.left(90)
+            turt.hideturtle()
 
-        list_ins = []
-
-        for index in range(len(matrix)):
-            list_ins.append(cls.create(**matrix[index]))
-
-        return list_ins
+        turtle.done()
